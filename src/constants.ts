@@ -7,7 +7,7 @@ export const ISKCON_LOCATIONS: Record<string, string[]> = {
   'Chhattisgarh': ['Raipur', 'Bhilai'],
   'Delhi': ['East of Kailash', 'Punjabi Bagh', 'Rohini', 'Dwarka', 'Chanakyapuri'],
   'Gujarat': ['Ahmedabad', 'Baroda', 'Surat', 'Rajkot', 'Vallabh Vidyanagar'],
-  'Haryana': ['Kurukshetra', 'Panchkula', 'Rohtak'],
+  'Haryana': ['Kurukshetra', 'Panchkula', 'Sarai', 'Rohtak'],
   'Himachal Pradesh': ['Shimla'],
   'Jammu and Kashmir': ['Jammu', 'Udhampur'],
   'Jharkhand': ['Jamshedpur'],
