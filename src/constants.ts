@@ -24,7 +24,6 @@ export const ISKCON_LOCATIONS: Record<string, string[]> = {
   'West Bengal': ['Mayapur', 'Kolkata', 'Siliguri'],
 };
 
-export const STATES = Object.keys(ISKCON_LOCATIONS).sort();
 
 export const OFFERING_FORMATS = [
   { id: 'text', label: 'Text Offering' },
@@ -41,7 +40,6 @@ export const ASHRAYS = [
   'HH Jayapataka Swami Maharaj',
   'Other'
 ];
-export const STATES = Object.keys(ISKCON_LOCATIONS).sort();
 
 export const STATES = [
   ...Object.keys(ISKCON_LOCATIONS).sort(),
