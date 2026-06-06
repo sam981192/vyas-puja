@@ -33,3 +33,17 @@ export const OFFERING_FORMATS = [
   { id: 'document', label: 'Document (PDF/DOC)' },
   { id: 'ppt', label: 'PPT' },
 ];
+
+export const ASHRAYS = [
+  'HH Gopal Krishna Goswami Maharaj',
+  'HH Lokanath Swami Maharaj',
+  'HH Radhanath Swami Maharaj',
+  'HH Jayapataka Swami Maharaj',
+  'Other'
+];
+export const STATES = Object.keys(ISKCON_LOCATIONS).sort();
+
+export const STATES = [
+  ...Object.keys(ISKCON_LOCATIONS).sort(),
+  'Other'
+];
