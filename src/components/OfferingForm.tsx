@@ -36,7 +36,9 @@ const formatFileName = (
 interface FormData {
   language: string;
   state: string;
+  customState: string;
   city: string;
+  customCity: string;
   name: string;
   contact: string;
   formatType: string;
@@ -50,7 +52,9 @@ export default function OfferingForm({ userId }: { userId: string }) {
   const [formData, setFormData] = useState<FormData>({
     language: '',
     state: '',
+    customState: '',
     city: '',
+    customCity: '',
     name: '',
     contact: '',
     formatType: '',
@@ -63,13 +67,27 @@ export default function OfferingForm({ userId }: { userId: string }) {
   const [allFileUrls, setAllFileUrls] = useState<{url: string, name: string}[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const cities = formData.state ? ISKCON_LOCATIONS[formData.state] || [] : [];
+  const cities =
+  formData.state && formData.state !== 'Other'
+    ? ISKCON_LOCATIONS[formData.state] || []
+    : [];
 
   const handleNext = () => setStep(step + 1);
   const handleBack = () => setStep(step - 1);
 
   const isStep1Valid = !!formData.formatType;
-  const isStep2Valid = !!(formData.language && formData.state && formData.city && formData.name && formData.contact);
+  const isStep2Valid = !!(
+  formData.language &&
+  formData.state &&
+  formData.name &&
+  formData.contact &&
+  (
+    formData.state === 'Other'
+      ? formData.customState && formData.customCity
+      : formData.city
+  )
+);
+  
   const isStep3Valid = formData.formatType === 'text' ? !!formData.textContent.trim() : files.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,8 +140,15 @@ export default function OfferingForm({ userId }: { userId: string }) {
 
           cleanDataArray.push({
             language: formData.language,
-            state: formData.state,
-            city: formData.city,
+            state:
+  formData.state === 'Other'
+    ? formData.customState
+    : formData.state,
+
+city:
+  formData.state === 'Other'
+    ? formData.customCity
+    : formData.city,
             name: formData.name,
             contact: formData.contact,
             format_type: formData.formatType,
@@ -370,18 +395,61 @@ export default function OfferingForm({ userId }: { userId: string }) {
                         {STATES.map(state => <option key={state} value={state}>{state}</option>)}
                       </select>
                     </div>
+                    {formData.state === 'Other' && (
+                      <input
+                        type="text"
+                        placeholder="Enter State"
+                        value={formData.customState}
+                        onChange={e =>
+                          setFormData({
+                            ...formData,
+                            customState: e.target.value
+                          })
+                        }
+                        className="w-full mt-2 px-4 py-3 bg-stone-50 border border-stone-200 rounded-lg"
+                      />
+                    )}  
                     <div className="space-y-1.5">
                       <label className="text-sm font-semibold text-stone-700">City / Temple Location *</label>
-                      <select 
-                        required
-                        disabled={!formData.state}
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all disabled:opacity-50"
-                        value={formData.city}
-                        onChange={e => setFormData({ ...formData, city: e.target.value })}
-                      >
-                        <option value="">Select City</option>
-                        {cities.map(city => <option key={city} value={city}>{city}</option>)}
-                      </select>
+                     {formData.state !== 'Other' ? (
+
+  <select
+    required
+    disabled={!formData.state}
+    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-lg text-sm"
+    value={formData.city}
+    onChange={e =>
+      setFormData({
+        ...formData,
+        city: e.target.value
+      })
+    }
+  >
+    <option value="">Select City</option>
+
+    {cities.map(city => (
+      <option key={city} value={city}>
+        {city}
+      </option>
+    ))}
+  </select>
+
+) : (
+
+  <input
+    type="text"
+    placeholder="Enter City / Temple Location"
+    value={formData.customCity}
+    onChange={e =>
+      setFormData({
+        ...formData,
+        customCity: e.target.value
+      })
+    }
+    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-lg text-sm"
+  />
+
+)}
                     </div>
                   </div>
 
@@ -543,11 +611,19 @@ export default function OfferingForm({ userId }: { userId: string }) {
                     </div>
                     <div>
                       <p className="text-xs text-stone-400 font-bold uppercase tracking-wider mb-1">State</p>
-                      <p className="font-semibold text-stone-900">{formData.state}</p>
+                      <p className="font-semibold text-stone-900">
+  {formData.state === 'Other'
+    ? formData.customState
+    : formData.state}
+</p>
                     </div>
                     <div>
                       <p className="text-xs text-stone-400 font-bold uppercase tracking-wider mb-1">City/Temple</p>
-                      <p className="font-semibold text-stone-900">{formData.city}</p>
+                      <p className="font-semibold text-stone-900">
+  {formData.state === 'Other'
+    ? formData.customCity
+    : formData.city}
+</p>
                     </div>
                   </div>
 
