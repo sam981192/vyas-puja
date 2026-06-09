@@ -364,8 +364,11 @@ export default function AdminDashboard({ userId }: { userId: string }) {
   const downloadAllFiles = async () => {
   const zip = new JSZip();
 
-  const pendingFolder = zip.folder("Pending Files");
-  const downloadedFolder = zip.folder("Files Downloaded");
+const rootFolder = zip.folder("Vyas Puja");
+
+const pendingFolder = rootFolder?.folder("Pending Files");
+const downloadedFolder = rootFolder?.folder("Downloaded Files");
+const successFolder = rootFolder?.folder("Success Files");
 
   let count = 0;
 
@@ -381,17 +384,15 @@ export default function AdminDashboard({ userId }: { userId: string }) {
 
         const log = s.fileLogs?.[i];
 
-        const isDownloaded =
-          log &&
-          (
-            log.status === 'Downloaded' ||
-            log.status === 'Success'
-          );
+        if (!log) {
 
-        if (isDownloaded) {
+  pendingFolder?.file(fileName, blob);
+
+}
+else if (log.status === 'Downloaded') {
 
   const date =
-    log?.downloaded_at
+    log.downloaded_at
       ? new Date(log.downloaded_at)
           .toISOString()
           .split('T')[0]
@@ -402,7 +403,23 @@ export default function AdminDashboard({ userId }: { userId: string }) {
 
   dateFolder?.file(fileName, blob);
 
-} else {
+}
+else if (log.status === 'Success') {
+
+  const date =
+    log.downloaded_at
+      ? new Date(log.downloaded_at)
+          .toISOString()
+          .split('T')[0]
+      : 'Unknown Date';
+
+  const dateFolder =
+    successFolder?.folder(date);
+
+  dateFolder?.file(fileName, blob);
+
+}
+else {
 
   pendingFolder?.file(fileName, blob);
 
