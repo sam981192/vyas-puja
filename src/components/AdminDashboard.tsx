@@ -389,10 +389,24 @@ export default function AdminDashboard({ userId }: { userId: string }) {
           );
 
         if (isDownloaded) {
-          downloadedFolder?.file(fileName, blob);
-        } else {
-          pendingFolder?.file(fileName, blob);
-        }
+
+  const date =
+    log?.downloaded_at
+      ? new Date(log.downloaded_at)
+          .toISOString()
+          .split('T')[0]
+      : 'Unknown Date';
+
+  const dateFolder =
+    downloadedFolder?.folder(date);
+
+  dateFolder?.file(fileName, blob);
+
+} else {
+
+  pendingFolder?.file(fileName, blob);
+
+}
 
         count++;
 
