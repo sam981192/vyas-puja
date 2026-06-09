@@ -362,27 +362,57 @@ export default function AdminDashboard({ userId }: { userId: string }) {
   };
 
   const downloadAllFiles = async () => {
-    const zip = new JSZip();
-    let count = 0;
-    for (const s of filtered) {
-      for (let i = 0; i < (s.allUrls?.length || 0); i++) {
-        if (userId === 'priyanka') {
-          const log = s.fileLogs && s.fileLogs[i];
-          if (log && (log.status === 'Downloaded' || log.status === 'Success')) continue;
+  const zip = new JSZip();
+
+  const pendingFolder = zip.folder("Pending Files");
+  const downloadedFolder = zip.folder("Files Downloaded");
+
+  let count = 0;
+
+  for (const s of filtered) {
+    for (let i = 0; i < (s.allUrls?.length || 0); i++) {
+
+      try {
+        const res = await fetch(s.allUrls![i]);
+        const blob = await res.blob();
+
+        const fileName =
+          s.files[i] || `file_${count + 1}`;
+
+        const log = s.fileLogs?.[i];
+
+        const isDownloaded =
+          log &&
+          (
+            log.status === 'Downloaded' ||
+            log.status === 'Success'
+          );
+
+        if (isDownloaded) {
+          downloadedFolder?.file(fileName, blob);
+        } else {
+          pendingFolder?.file(fileName, blob);
         }
 
-        try {
-          const res = await fetch(s.allUrls![i]);
-          const blob = await res.blob();
-          zip.file(s.files[i] || `file_${count + 1}`, blob);
-          count++;
-        } catch { /* skip */ }
+        count++;
+
+      } catch (err) {
+        console.error(err);
       }
     }
-    if (count === 0) { alert('No pending files to download.'); return; }
-    const content = await zip.generateAsync({ type: 'blob' });
-    saveAs(content, 'vyas_puja_pending_offerings.zip');
-  };
+  }
+
+  if (count === 0) {
+    alert('No files found.');
+    return;
+  }
+
+  const content = await zip.generateAsync({
+    type: 'blob'
+  });
+
+  saveAs(content, 'vyas_puja_all_files.zip');
+};
 
   const states = Array.from(new Set(submissions.map(s => s.state))).sort();
   const langs = Array.from(new Set(submissions.map(s => s.language))).sort();
