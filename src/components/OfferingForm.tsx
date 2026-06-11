@@ -111,16 +111,25 @@ export default function OfferingForm({ userId }: { userId: string }) {
       if (filesToUpload.length > 0) {
         for (let i = 0; i < filesToUpload.length; i++) {
           const file = filesToUpload[i];
-          const renamedName = formatFileName(
-            formData.language || 'unknown',
-            formData.state || 'unknown',
-            formData.city || 'unknown',
-            formData.name || 'unknown',
-            formData.contact || 'unknown',
-            filesToUpload.length > 1 ? i + 1 : 1,
-            file.name
-          );
+         const finalState =
+  formData.state === 'Other'
+    ? formData.customState
+    : formData.state;
 
+const finalCity =
+  formData.state === 'Other'
+    ? formData.customCity
+    : formData.city;
+
+const renamedName = formatFileName(
+  formData.language || 'unknown',
+  finalState || 'unknown',
+  finalCity || 'unknown',
+  formData.name || 'unknown',
+  formData.contact || 'unknown',
+  filesToUpload.length > 1 ? i + 1 : 1,
+  file.name
+);
           // Upload to Supabase Storage
           const { error: uploadError } = await supabase.storage
             .from('offerings')
