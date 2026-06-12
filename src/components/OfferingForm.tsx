@@ -6,15 +6,15 @@ import { supabase } from '../lib/supabase';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
-const formatFileName = (
-  language: string,
-  state: string,
-  city: string,
-  name: string,
-  contact: string,
-  index: number,
-  originalName: string
-) => {
+const base = [
+  sanitize(language),
+  sanitize(state),
+  sanitize(city),
+  sanitize(name),
+  sanitize(contact),
+  Date.now(),
+  index.toString()
+]; => {
   const sanitize = (text: string) =>
     text.toLowerCase()
       .trim()
