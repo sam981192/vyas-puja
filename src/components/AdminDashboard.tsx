@@ -361,24 +361,29 @@ export default function AdminDashboard({ userId }: { userId: string }) {
       const l = lang.trim().toLowerCase();
       if (l === 'hindi') return 'Hindi';
       if (l === 'english') return 'English';
-      // capitalize first letter for any other language
       return lang.trim().charAt(0).toUpperCase() + lang.trim().slice(1).toLowerCase();
     };
 
     const cleanDevoteeName = (name: string): string => {
       return name
         .trim()
-        .replace(/\s+/g, '_')
-        .replace(/[^a-zA-Z0-9_]/g, '')
-        .replace(/_submission$/i, '');
+        .replace(/\s+/g, '_');
     };
+
+    // Count total files per devotee name across all filtered submissions
+    const devoteeFileCount: Record<string, number> = {};
+    for (const s of filtered) {
+      const key = s.name.trim();
+      devoteeFileCount[key] = (devoteeFileCount[key] || 0) + (s.allUrls?.length || 0);
+    }
 
     let count = 0;
 
     for (const s of filtered) {
       const lang = normalizeLanguage(s.language);
       const devoteeName = cleanDevoteeName(s.name);
-      const multipleFiles = (s.allUrls?.length || 0) > 1;
+      const devoteeKey = s.name.trim();
+      const useDevoteeFolder = (devoteeFileCount[devoteeKey] || 0) > 1;
 
       for (let i = 0; i < (s.allUrls?.length || 0); i++) {
         try {
@@ -391,7 +396,7 @@ export default function AdminDashboard({ userId }: { userId: string }) {
 
           if (!log || log.status === 'Pending') {
             const langFolder = rootFolder?.folder('Pending Files')?.folder(lang);
-            targetFolder = multipleFiles ? langFolder?.folder(devoteeName) : langFolder;
+            targetFolder = useDevoteeFolder ? langFolder?.folder(devoteeName) : langFolder;
           } else if (log.status === 'Downloaded') {
             const date = log.downloaded_at
               ? new Date(log.downloaded_at).toISOString().split('T')[0]
@@ -400,7 +405,7 @@ export default function AdminDashboard({ userId }: { userId: string }) {
               ?.folder('Downloaded Files')
               ?.folder(`${date}-download`)
               ?.folder(lang);
-            targetFolder = multipleFiles ? langFolder?.folder(devoteeName) : langFolder;
+            targetFolder = useDevoteeFolder ? langFolder?.folder(devoteeName) : langFolder;
           } else if (log.status === 'Success') {
             const date = log.updated_at
               ? new Date(log.updated_at).toISOString().split('T')[0]
@@ -409,11 +414,10 @@ export default function AdminDashboard({ userId }: { userId: string }) {
               ?.folder('Success Files')
               ?.folder(`${date}-success`)
               ?.folder(lang);
-            targetFolder = multipleFiles ? langFolder?.folder(devoteeName) : langFolder;
+            targetFolder = useDevoteeFolder ? langFolder?.folder(devoteeName) : langFolder;
           } else {
-            // fallback: treat unknown status as Pending
             const langFolder = rootFolder?.folder('Pending Files')?.folder(lang);
-            targetFolder = multipleFiles ? langFolder?.folder(devoteeName) : langFolder;
+            targetFolder = useDevoteeFolder ? langFolder?.folder(devoteeName) : langFolder;
           }
 
           if (targetFolder) {
