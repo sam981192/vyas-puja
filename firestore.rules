@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Admin check - bootstrap current user as admin
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'suraj.goldenagemedia@gmail.com' && request.auth.token.email_verified == true;
+    }
+
+    // Offering validation
+    function isValidOffering(data) {
+      return data.keys().hasAll(['timestamp', 'language', 'state', 'city', 'name', 'contact', 'formatType']) &&
+             data.language is string && data.language.size() <= 64 &&
+             data.state is string && data.state.size() <= 64 &&
+             data.city is string && data.city.size() <= 128 &&
+             data.name is string && data.name.size() <= 256 &&
+             data.contact is string && data.contact.size() <= 256 &&
+             data.formatType in ['text', 'audio', 'image', 'document', 'ppt'] &&
+             (data.formatType == 'text' ? (data.textContent is string && data.textContent.size() <= 100000) : true);
+    }
+
+    match /offerings/{offeringId} {
+      // Public can create offerings
+      allow create: if isValidOffering(incoming());
+      
+      // Only admins can list/get/update offerings
+      allow list, get: if isAdmin();
+      
+      // Action: Update offering metadata (unlikely needed for this app, but provided for completeness)
+      allow update: if isAdmin() && isValidOffering(incoming());
+      
+      allow delete: if isAdmin();
+    }
+  }
+}
