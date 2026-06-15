@@ -54,7 +54,6 @@ export default function AdminDashboard({ userId }: { userId: string }) {
   const [appliedFilters, setAppliedFilters] = useState({ search: '', state: '', lang: '', format: '' });
   const [error, setError] = useState<string | null>(null);
 
-  // Apply an array of updated file_statuses rows into the submissions list
   const applyLogsToSubmissions = (subs: Submission[], updatedLogs: any[]): Submission[] => {
     return subs.map(sub => {
       const newFileLogs = sub.files.map((fileName: string) => {
@@ -115,7 +114,6 @@ export default function AdminDashboard({ userId }: { userId: string }) {
 
       setSubmissions(result);
 
-      // Pre-populate send_to inputs from DB (only for rows not yet locally dirtied)
       setSendToValues(prev => {
         const next = { ...prev };
         result.forEach((s: Submission) => {
@@ -237,7 +235,6 @@ export default function AdminDashboard({ userId }: { userId: string }) {
 
     setSavingRows(prev => ({ ...prev, [s.id]: true }));
 
-    // Build clean upsert rows — never spread the existing DB row to avoid id conflicts
     const now = new Date().toISOString();
     const upsertRows = s.files.map((fileName, index) => ({
       submission_id: s.id,
@@ -247,7 +244,6 @@ export default function AdminDashboard({ userId }: { userId: string }) {
       send_to: sendTo,
       updated_by: userId,
       updated_at: now,
-      // preserve existing download fields if already set
       downloaded_by: s.fileLogs?.[index]?.downloaded_by || null,
       downloaded_at: s.fileLogs?.[index]?.downloaded_at || null,
     }));
@@ -260,7 +256,6 @@ export default function AdminDashboard({ userId }: { userId: string }) {
       console.log('Supabase save response:', { data, error });
       if (error) throw error;
 
-      // Build merged file logs using returned data or our payload
       const returnedLogs: any[] = data || upsertRows;
       const mergedFileLogs = s.files.map((fileName) =>
         returnedLogs.find(l => l.file_name === fileName) ??
@@ -269,7 +264,6 @@ export default function AdminDashboard({ userId }: { userId: string }) {
       );
       console.log('Updated local fileLogs:', mergedFileLogs);
 
-      // Update submissions state immediately
       setSubmissions(prev => {
         const next = applyLogsToSubmissions(prev, mergedFileLogs.map(l => ({ ...l, submission_id: s.id })));
         const downloaded = next.reduce((acc, curr) =>
@@ -278,13 +272,11 @@ export default function AdminDashboard({ userId }: { userId: string }) {
         return next;
       });
 
-      // Clear local overrides so dropdown reads from fileLogs (source of truth)
       setStatusValues(prev => { const n = { ...prev }; delete n[s.id]; return n; });
       setDirtyRows(prev => ({ ...prev, [s.id]: false }));
       setSavedRows(prev => ({ ...prev, [s.id]: true }));
       setTimeout(() => setSavedRows(prev => ({ ...prev, [s.id]: false })), 2000);
 
-      // Background sync to confirm DB state
       fetchSubmissions(true);
     } catch (err) {
       console.error(err);
@@ -302,7 +294,6 @@ export default function AdminDashboard({ userId }: { userId: string }) {
       const sendTo = sendToValues[s.id] !== undefined ? sendToValues[s.id] : (s.fileLogs?.[0]?.send_to || '');
       const now = new Date().toISOString();
 
-      // Clean upsert rows — never spread existing DB row
       const upsertRows = s.files.map((fileName, index) => ({
         submission_id: s.id,
         file_name: fileName,
@@ -362,88 +353,88 @@ export default function AdminDashboard({ userId }: { userId: string }) {
   };
 
   const downloadAllFiles = async () => {
-  const zip = new JSZip();
+    const zip = new JSZip();
+    const rootFolder = zip.folder("Vyas_Puja");
 
-const rootFolder = zip.folder("Vyas Puja");
+    const normalizeLanguage = (lang: string): string => {
+      if (!lang || !lang.trim()) return 'Unknown';
+      const l = lang.trim().toLowerCase();
+      if (l === 'hindi') return 'Hindi';
+      if (l === 'english') return 'English';
+      // capitalize first letter for any other language
+      return lang.trim().charAt(0).toUpperCase() + lang.trim().slice(1).toLowerCase();
+    };
 
-const pendingFolder = rootFolder?.folder("Pending Files");
-const downloadedFolder = rootFolder?.folder("Downloaded Files");
-const successFolder = rootFolder?.folder("Success Files");
+    const cleanDevoteeName = (name: string): string => {
+      return name
+        .trim()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9_]/g, '')
+        .replace(/_submission$/i, '');
+    };
 
-  let count = 0;
+    let count = 0;
 
-  for (const s of filtered) {
-    for (let i = 0; i < (s.allUrls?.length || 0); i++) {
+    for (const s of filtered) {
+      const lang = normalizeLanguage(s.language);
+      const devoteeName = cleanDevoteeName(s.name);
+      const multipleFiles = (s.allUrls?.length || 0) > 1;
 
-      try {
-        const res = await fetch(s.allUrls![i]);
-        const blob = await res.blob();
+      for (let i = 0; i < (s.allUrls?.length || 0); i++) {
+        try {
+          const res = await fetch(s.allUrls![i]);
+          const blob = await res.blob();
+          const fileName = s.files[i] || `file_${count + 1}`;
+          const log = s.fileLogs?.[i];
 
-        const fileName =
-          s.files[i] || `file_${count + 1}`;
+          let targetFolder: JSZip | null | undefined = null;
 
-        const log = s.fileLogs?.[i];
+          if (!log || log.status === 'Pending') {
+            const langFolder = rootFolder?.folder('Pending Files')?.folder(lang);
+            targetFolder = multipleFiles ? langFolder?.folder(devoteeName) : langFolder;
+          } else if (log.status === 'Downloaded') {
+            const date = log.downloaded_at
+              ? new Date(log.downloaded_at).toISOString().split('T')[0]
+              : 'Unknown-Date';
+            const langFolder = rootFolder
+              ?.folder('Downloaded Files')
+              ?.folder(`${date}-download`)
+              ?.folder(lang);
+            targetFolder = multipleFiles ? langFolder?.folder(devoteeName) : langFolder;
+          } else if (log.status === 'Success') {
+            const date = log.updated_at
+              ? new Date(log.updated_at).toISOString().split('T')[0]
+              : 'Unknown-Date';
+            const langFolder = rootFolder
+              ?.folder('Success Files')
+              ?.folder(`${date}-success`)
+              ?.folder(lang);
+            targetFolder = multipleFiles ? langFolder?.folder(devoteeName) : langFolder;
+          } else {
+            // fallback: treat unknown status as Pending
+            const langFolder = rootFolder?.folder('Pending Files')?.folder(lang);
+            targetFolder = multipleFiles ? langFolder?.folder(devoteeName) : langFolder;
+          }
 
-        if (!log) {
+          if (targetFolder) {
+            targetFolder.file(fileName, blob);
+          }
 
-  pendingFolder?.file(fileName, blob);
-
-}
-else if (log.status === 'Downloaded') {
-
-  const date =
-    log.downloaded_at
-      ? new Date(log.downloaded_at)
-          .toISOString()
-          .split('T')[0]
-      : 'Unknown Date';
-
-  const dateFolder =
-    downloadedFolder?.folder(date);
-
-  dateFolder?.file(fileName, blob);
-
-}
-else if (log.status === 'Success') {
-
-  const date =
-    log.downloaded_at
-      ? new Date(log.downloaded_at)
-          .toISOString()
-          .split('T')[0]
-      : 'Unknown Date';
-
-  const dateFolder =
-    successFolder?.folder(date);
-
-  dateFolder?.file(fileName, blob);
-
-}
-else {
-
-  pendingFolder?.file(fileName, blob);
-
-}
-
-        count++;
-
-      } catch (err) {
-        console.error(err);
+          count++;
+        } catch (err) {
+          console.error(err);
+        }
       }
     }
-  }
 
-  if (count === 0) {
-    alert('No files found.');
-    return;
-  }
+    if (count === 0) {
+      alert('No files found.');
+      return;
+    }
 
-  const content = await zip.generateAsync({
-    type: 'blob'
-  });
-
-  saveAs(content, 'vyas_puja_all_files.zip');
-};
+    const content = await zip.generateAsync({ type: 'blob' });
+    saveAs(content, 'vyas_puja_all_files.zip');
+  };
 
   const states = Array.from(new Set(submissions.map(s => s.state))).sort();
   const langs = Array.from(new Set(submissions.map(s => s.language))).sort();
