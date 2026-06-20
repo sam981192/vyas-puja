@@ -28,7 +28,11 @@ export default function App() {
   };
 
   const goToCountAllOffering = () => {
-    window.location.href = 'https://sam981192.github.io/offering-collection-/';
+    window.open(
+      'https://sam981192.github.io/offering-collection-/',
+      '_blank',
+      'noopener,noreferrer'
+    );
   };
 
   if (!userId) {
