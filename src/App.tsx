@@ -29,7 +29,7 @@ export default function App() {
 
   const goToCountAllOffering = () => {
     window.open(
-      'https://sam981192.github.io/offering-collection-/',
+      'https://sam981192.github.io/offering-collection/',
       '_blank',
       'noopener,noreferrer'
     );
