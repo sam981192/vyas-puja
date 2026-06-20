@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import OfferingForm from './components/OfferingForm';
 import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
-import { Flower2, Send, ShieldCheck, LogOut, User } from 'lucide-react';
+import { Flower2, Send, ShieldCheck, LogOut, User, BarChart3 } from 'lucide-react';
 
 export default function App() {
   const [view, setView] = useState<'submit' | 'admin'>('submit');
@@ -27,6 +27,10 @@ export default function App() {
     setUserId(null);
   };
 
+  const goToCountAllOffering = () => {
+    window.location.href = 'https://sam981192.github.io/offering-collection-/';
+  };
+
   if (!userId) {
     return (
       <div className="min-h-screen font-sans bg-[#F8F9FA] flex flex-col items-center justify-center p-4">
@@ -48,36 +52,46 @@ export default function App() {
               Vyas Puja Offerings
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-4">
+            {/* Count All Offering Button */}
+            <button
+              onClick={goToCountAllOffering}
+              className="flex items-center gap-1.5 px-3 md:px-5 py-2 rounded-lg text-xs md:text-sm font-semibold bg-stone-100/80 text-stone-600 hover:text-orange-600 hover:bg-white shadow-sm transition-all duration-200"
+            >
+              <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <span className="hidden md:inline">Count All Offering</span>
+            </button>
+
             {/* Nav Buttons */}
             {userId !== 'priyanka' && (
-            <nav className="flex items-center bg-stone-100/80 rounded-xl p-1 gap-1">
-              <button
-                id="nav-submit"
-                onClick={() => setView('submit')}
-                className={`flex items-center gap-1.5 px-3 md:px-5 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 ${
-                  view === 'submit'
-                    ? 'bg-white text-orange-600 shadow-sm shadow-stone-200/60'
-                    : 'text-stone-500 hover:text-stone-800'
-                }`}
-              >
-                <Send className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden md:inline">Submit</span>
-              </button>
-              <button
-                id="nav-admin"
-                onClick={() => setView('admin')}
-                className={`flex items-center gap-1.5 px-3 md:px-5 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 ${
-                  view === 'admin'
-                    ? 'bg-white text-orange-600 shadow-sm shadow-stone-200/60'
-                    : 'text-stone-500 hover:text-stone-800'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden md:inline">Admin</span>
-              </button>
-            </nav>
+              <nav className="flex items-center bg-stone-100/80 rounded-xl p-1 gap-1">
+                <button
+                  id="nav-submit"
+                  onClick={() => setView('submit')}
+                  className={`flex items-center gap-1.5 px-3 md:px-5 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 ${
+                    view === 'submit'
+                      ? 'bg-white text-orange-600 shadow-sm shadow-stone-200/60'
+                      : 'text-stone-500 hover:text-stone-800'
+                  }`}
+                >
+                  <Send className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  <span className="hidden md:inline">Submit</span>
+                </button>
+
+                <button
+                  id="nav-admin"
+                  onClick={() => setView('admin')}
+                  className={`flex items-center gap-1.5 px-3 md:px-5 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 ${
+                    view === 'admin'
+                      ? 'bg-white text-orange-600 shadow-sm shadow-stone-200/60'
+                      : 'text-stone-500 hover:text-stone-800'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  <span className="hidden md:inline">Admin</span>
+                </button>
+              </nav>
             )}
 
             {/* User Info & Logout */}
@@ -86,6 +100,7 @@ export default function App() {
                 <User className="w-4 h-4 text-orange-500" />
                 <span className="capitalize">{userId}</span>
               </div>
+
               <button
                 onClick={handleLogout}
                 className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -100,7 +115,6 @@ export default function App() {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 py-8">
-        
         {view === 'submit' && (
           <div className="max-w-4xl mx-auto">
             <div className="mb-8 text-center">
@@ -113,11 +127,9 @@ export default function App() {
           </div>
         )}
 
-        {view === 'admin' && (
-          <AdminDashboard userId={userId} />
-        )}
+        {view === 'admin' && <AdminDashboard userId={userId} />}
       </main>
-      
+
       <footer className="border-t border-stone-200/60 bg-white/60 backdrop-blur-sm py-5 mt-auto">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-xs text-stone-400 font-medium">
           <p>© {new Date().getFullYear()} ISKCON Management</p>
