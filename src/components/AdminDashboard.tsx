@@ -102,7 +102,28 @@ export default function AdminDashboard({ userId }: { userId: string }) {
       return { ...sub, fileLogs: newFileLogs };
     });
   };
+const fetchAllRows = async (queryBuilder: any) => {
+  const pageSize = 1000;
+  let from = 0;
+  let allRows: any[] = [];
 
+  while (true) {
+    const { data, error } = await queryBuilder.range(
+      from,
+      from + pageSize - 1
+    );
+
+    if (error) throw error;
+
+    allRows = [...allRows, ...(data || [])];
+
+    if (!data || data.length < pageSize) break;
+
+    from += pageSize;
+  }
+
+  return allRows;
+};
   const fetchSubmissions = async (silent = false) => {
     if (!silent) setLoading(true);
     setError(null);
@@ -111,11 +132,11 @@ export default function AdminDashboard({ userId }: { userId: string }) {
       if (userId && userId !== 'admin' && userId !== 'priyanka') {
         query = query.eq('user_id', userId);
       }
-      const { data: rows, error: fetchError } = await query;
-      if (fetchError) throw fetchError;
+     const rows = await fetchAllRows(query);
 
-      const { data: logsData } = await supabase.from('file_statuses').select('*');
-      const logRows: any[] = logsData || [];
+const logRows = await fetchAllRows(
+  supabase.from('file_statuses').select('*')
+);
       setDownloadLogs(logRows);
 
       const grouped = new Map();
